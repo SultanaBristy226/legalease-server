@@ -114,3 +114,31 @@ export const updateHiringStatus = async (req, res) => {
     res.status(500).json({ message: "Something went wrong on the server." });
   }
 };
+// @desc   Mark a hiring request as paid (placeholder until Stripe is integrated)
+// @route  PATCH /api/hiring/:id/pay
+// @access Private (user only)
+export const payHiringFee = async (req, res) => {
+  try {
+    const hiringRequest = await HiringRequest.findById(req.params.id);
+    if (!hiringRequest) {
+      return res.status(404).json({ message: "Hiring request not found." });
+    }
+
+    if (String(hiringRequest.client) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    if (hiringRequest.status !== "accepted") {
+      return res.status(400).json({ message: "This request has not been accepted yet." });
+    }
+
+    hiringRequest.isPaid = true;
+    hiringRequest.transactionId = `TXN-${Date.now()}`;
+    await hiringRequest.save();
+
+    res.status(200).json({ message: "Payment successful.", hiringRequest });
+  } catch (error) {
+    console.error("Pay hiring fee error:", error.message);
+    res.status(500).json({ message: "Something went wrong on the server." });
+  }
+};

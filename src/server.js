@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import lawyerRoutes from "./routes/lawyerRoutes.js";
 import hiringRoutes from "./routes/hiringRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -26,6 +27,8 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/lawyers", lawyerRoutes);
 app.use("/api/hiring", hiringRoutes);
+app.use("/api/users", userRoutes);
+
 // Test route
 app.get("/", (req, res) => {
   res.send("🟢 LegalEase server is running!");
