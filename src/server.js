@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import lawyerRoutes from "./routes/lawyerRoutes.js";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(cookieParser());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/lawyers", lawyerRoutes);
 
 // Test route
 app.get("/", (req, res) => {
