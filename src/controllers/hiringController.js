@@ -1,5 +1,6 @@
 import HiringRequest from "../models/HiringRequest.js";
 import Lawyer from "../models/Lawyer.js";
+import Transaction from "../models/Transaction.js";
 
 // @desc   Create a hiring request (client hires a lawyer)
 // @route  POST /api/hiring
@@ -114,7 +115,8 @@ export const updateHiringStatus = async (req, res) => {
     res.status(500).json({ message: "Something went wrong on the server." });
   }
 };
-// @desc   Mark a hiring request as paid (placeholder until Stripe is integrated)
+
+// @desc   Mark a hiring request as paid and create transaction
 // @route  PATCH /api/hiring/:id/pay
 // @access Private (user only)
 export const payHiringFee = async (req, res) => {
@@ -132,11 +134,35 @@ export const payHiringFee = async (req, res) => {
       return res.status(400).json({ message: "This request has not been accepted yet." });
     }
 
+    if (hiringRequest.isPaid) {
+      return res.status(400).json({ message: "Already paid." });
+    }
+
+    // Get lawyer info for transaction
+    const lawyerProfile = await Lawyer.findById(hiringRequest.lawyer);
+    if (!lawyerProfile) {
+      return res.status(404).json({ message: "Lawyer profile not found." });
+    }
+
+    // Mark as paid
     hiringRequest.isPaid = true;
     hiringRequest.transactionId = `TXN-${Date.now()}`;
     await hiringRequest.save();
 
-    res.status(200).json({ message: "Payment successful.", hiringRequest });
+    // Create transaction record
+    await Transaction.create({
+      transactionId: hiringRequest.transactionId,
+      user: req.user._id,
+      lawyer: hiringRequest.lawyer,
+      hiringRequest: hiringRequest._id,
+      amount: hiringRequest.fee,
+    });
+
+    res.status(200).json({ 
+      message: "Payment successful.", 
+      hiringRequest,
+      transactionId: hiringRequest.transactionId 
+    });
   } catch (error) {
     console.error("Pay hiring fee error:", error.message);
     res.status(500).json({ message: "Something went wrong on the server." });

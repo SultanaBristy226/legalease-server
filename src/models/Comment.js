@@ -16,11 +16,16 @@ const commentSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      maxlength: 500,
+    },
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: 5,
     },
   },
   { timestamps: true }
 );
 
-const Comment = mongoose.model("Comment", commentSchema);
-
-export default Comment;
+export default mongoose.model("Comment", commentSchema);
