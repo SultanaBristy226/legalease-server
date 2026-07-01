@@ -25,7 +25,7 @@ type Comment = {
 };
 
 export default function LawyerDetailsPage() {
-  const { id } = useParams();
+  const { id } = useParams() as { id: string };
   const { user } = useAuth();
 
   const [lawyer, setLawyer] = useState<Lawyer | null>(null);
@@ -34,12 +34,13 @@ export default function LawyerDetailsPage() {
   const [hireStatus, setHireStatus] = useState("");
   const [hireLoading, setHireLoading] = useState(false);
 
-  // Comment states
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [commentError, setCommentError] = useState("");
+  const [commentsLoading, setCommentsLoading] = useState(true);
 
+  // Fetch lawyer details
   useEffect(() => {
     const fetchLawyer = async () => {
       try {
@@ -54,14 +55,22 @@ export default function LawyerDetailsPage() {
     if (id) fetchLawyer();
   }, [id]);
 
+  // Fetch comments
   useEffect(() => {
     const fetchComments = async () => {
+      setCommentsLoading(true);
       try {
         const res = await axiosInstance.get(`/comments/lawyer/${id}`);
-        setComments(res.data.comments || []);
+        if (res.data && Array.isArray(res.data.comments)) {
+          setComments(res.data.comments);
+        } else {
+          setComments([]);
+        }
       } catch (err) {
         console.error("Failed to fetch comments:", err);
         setComments([]);
+      } finally {
+        setCommentsLoading(false);
       }
     };
     if (id) fetchComments();
@@ -117,7 +126,11 @@ export default function LawyerDetailsPage() {
       
       // Refresh comments
       const res = await axiosInstance.get(`/comments/lawyer/${id}`);
-      setComments(res.data.comments || []);
+      if (res.data && Array.isArray(res.data.comments)) {
+        setComments(res.data.comments);
+      } else {
+        setComments([]);
+      }
       
     } catch (err: any) {
       setCommentError(err.response?.data?.message || "Failed to post comment.");
@@ -148,7 +161,13 @@ export default function LawyerDetailsPage() {
     <main className="max-w-3xl mx-auto px-4 py-16 dark:bg-[#0a0a0a]">
       <div className="text-center">
         <div className="relative w-36 h-36 rounded-full overflow-hidden mx-auto mb-5 ring-4 ring-primary dark:ring-white/30">
-          <Image src={lawyer.photo} alt={lawyer.name} fill className="object-cover" />
+          <Image 
+            src={lawyer.photo} 
+            alt={lawyer.name} 
+            fill 
+            sizes="144px"
+            className="object-cover" 
+          />
         </div>
         <h1 className="font-heading text-3xl text-primary dark:text-white mb-1">{lawyer.name}</h1>
         <p className="text-text-muted dark:text-white/60 mb-3">{lawyer.specialization}</p>
@@ -201,12 +220,15 @@ export default function LawyerDetailsPage() {
         )}
       </div>
 
-      {/* Comments Section */}
+      {/* ============================================ */}
+      {/* ========== COMMENTS SECTION ========== */}
+      {/* ============================================ */}
       <div className="mt-12 border-t border-gray-border dark:border-white/10 pt-8">
         <h2 className="font-heading text-xl text-primary dark:text-white mb-4">
           Comments ({comments.length})
         </h2>
 
+        {/* Comment Form - Only for logged in users */}
         {user && user.role === "user" && (
           <form onSubmit={handleSubmitComment} className="mb-6">
             {commentError && (
@@ -230,13 +252,17 @@ export default function LawyerDetailsPage() {
           </form>
         )}
 
+        {/* Show login message if not logged in */}
         {!user && (
           <p className="text-sm text-text-muted dark:text-white/50 mb-4">
             Please <a href="/login" className="text-primary dark:text-white underline">login</a> to comment.
           </p>
         )}
 
-        {comments.length === 0 ? (
+        {/* Comments List */}
+        {commentsLoading ? (
+          <p className="text-text-muted dark:text-white/50 text-sm">Loading comments...</p>
+        ) : comments.length === 0 ? (
           <p className="text-text-muted dark:text-white/50 text-sm">
             No comments yet. Be the first to share your experience!
           </p>

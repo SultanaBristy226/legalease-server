@@ -6,14 +6,17 @@ import {
   updateComment,
   deleteComment,
 } from "../controllers/commentController.js";
-import { verifyToken } from "../middlewares/authMiddleware.js";
+import { verifyToken, verifyRole } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", verifyToken, createComment);
-router.get("/lawyer/:lawyerId", getCommentsByLawyer); // public
-router.get("/my-comments", verifyToken, getMyComments);
-router.put("/:id", verifyToken, updateComment);
-router.delete("/:id", verifyToken, deleteComment);
+// Public routes (no token required)
+router.get("/lawyer/:id", getCommentsByLawyer);
+
+// Private routes (token + user role required)
+router.post("/", verifyToken, verifyRole("user"), createComment);
+router.get("/my-comments", verifyToken, verifyRole("user"), getMyComments);
+router.patch("/:id", verifyToken, verifyRole("user"), updateComment);
+router.delete("/:id", verifyToken, verifyRole("user"), deleteComment);
 
 export default router;
