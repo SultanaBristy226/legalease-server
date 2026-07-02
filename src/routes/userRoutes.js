@@ -4,12 +4,14 @@ import {
   getAllUsers,
   changeUserRole,
   deleteUser,
+  getUserStats,  
 } from "../controllers/userController.js";
 import { verifyToken, verifyRole } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 router.patch("/update-profile", verifyToken, updateProfile);
+router.get("/stats", verifyToken, getUserStats);  
 router.get("/", verifyToken, verifyRole("admin"), getAllUsers);
 router.patch("/:id/role", verifyToken, verifyRole("admin"), changeUserRole);
 router.delete("/:id", verifyToken, verifyRole("admin"), deleteUser);

@@ -1,13 +1,13 @@
 import Comment from "../models/Comment.js";
 import HiringRequest from "../models/HiringRequest.js";
 
-// @desc   Create comment — only if user has hired and paid this lawyer
-// @route  POST /api/comments
-// @access Private (user only)
+// Create comment — only if user has hired and paid this lawyer
 export const createComment = async (req, res) => {
   try {
     const { lawyerId, text } = req.body;
     const userId = req.user._id;
+
+    console.log("Creating comment:", { lawyerId, text, userId });
 
     // Check if all fields are provided
     if (!lawyerId || !text) {
@@ -24,6 +24,8 @@ export const createComment = async (req, res) => {
       isPaid: true,
     });
 
+    console.log("Hiring check result:", hasHired);
+
     if (!hasHired) {
       return res.status(403).json({
         message: "You can only comment on lawyers you have hired and paid.",
@@ -34,8 +36,10 @@ export const createComment = async (req, res) => {
     const comment = await Comment.create({
       user: userId,
       lawyer: lawyerId,
-      text,
+      text: text,
     });
+
+    console.log("Comment created:", comment);
 
     // Populate user info
     const populated = await comment.populate("user", "fullName photoURL");
@@ -50,16 +54,17 @@ export const createComment = async (req, res) => {
   }
 };
 
-// @desc   Get all comments for a lawyer (public)
-// @route  GET /api/comments/lawyer/:id
-// @access Public
+// Get all comments for a lawyer (public)
 export const getCommentsByLawyer = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("Fetching comments for lawyer:", id);
+    
     const comments = await Comment.find({ lawyer: id })
       .populate("user", "fullName photoURL")
       .sort({ createdAt: -1 });
 
+    console.log("Comments found:", comments.length);
     res.status(200).json({ comments });
   } catch (error) {
     console.error("Get comments error:", error.message);
@@ -67,16 +72,17 @@ export const getCommentsByLawyer = async (req, res) => {
   }
 };
 
-// @desc   Get logged-in user's own comments
-// @route  GET /api/comments/my-comments
-// @access Private (user only)
+// Get logged-in user's own comments
 export const getMyComments = async (req, res) => {
   try {
     const userId = req.user._id;
+    console.log("Fetching comments for user:", userId);
+    
     const comments = await Comment.find({ user: userId })
       .populate("lawyer", "name specialization photo")
       .sort({ createdAt: -1 });
 
+    console.log("User comments found:", comments.length);
     res.status(200).json({ comments });
   } catch (error) {
     console.error("Get my comments error:", error.message);
@@ -84,9 +90,7 @@ export const getMyComments = async (req, res) => {
   }
 };
 
-// @desc   Update own comment
-// @route  PATCH /api/comments/:id
-// @access Private (user only)
+// Update own comment
 export const updateComment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -113,9 +117,7 @@ export const updateComment = async (req, res) => {
   }
 };
 
-// @desc   Delete own comment
-// @route  DELETE /api/comments/:id
-// @access Private (user only)
+// Delete own comment
 export const deleteComment = async (req, res) => {
   try {
     const { id } = req.params;
