@@ -13,50 +13,34 @@ import adminRoutes from "./routes/adminRoutes.js";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// CORS Configuration - Complete Fix
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  "https://legalease-client-weld.vercel.app",
-  "https://legalease-client.vercel.app",
-  "http://localhost:3000",
-].filter(Boolean);
+// CORS - Complete Fix for Vercel
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    "https://legalease-client-weld.vercel.app",
+    "https://legalease-client.vercel.app",
+    process.env.CLIENT_URL,
+  ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        console.log("Blocked origin:", origin);
-        callback(null, true); // Allow all in development
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'Accept',
-      'Origin',
-      'Access-Control-Allow-Origin',
-      'Access-Control-Allow-Headers',
-      'Access-Control-Allow-Methods'
-    ],
-    exposedHeaders: ['Content-Length', 'X-Requested-With'],
-    maxAge: 86400, // 24 hours
-  })
-);
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else {
+    res.header("Access-Control-Allow-Origin", "*");
+  }
+  
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept");
+  
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
-// Handle preflight requests
-app.options('*', cors());
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
 // Routes
@@ -67,7 +51,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Test route
+// Health check
 app.get("/", (req, res) => {
   res.send("🟢 LegalEase server is running!");
 });
@@ -83,9 +67,15 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Internal server error" });
 });
 
-// Connect to MongoDB, then start the server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+// For Vercel: Export the app
+export default app;
+
+// For local development
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 5000;
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+    });
   });
-});
+}
