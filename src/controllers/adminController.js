@@ -3,9 +3,6 @@ import Lawyer from "../models/Lawyer.js";
 import HiringRequest from "../models/HiringRequest.js";
 import Transaction from "../models/Transaction.js";
 
-// @desc   Get platform analytics (admin only)
-// @route  GET /api/admin/analytics
-// @access Private (admin only)
 export const getAnalytics = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
