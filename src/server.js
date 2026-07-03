@@ -9,6 +9,7 @@ import hiringRoutes from "./routes/hiringRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import transactionRoutes from "./routes/transactionRoutes.js";  // ← যোগ করো
 
 dotenv.config();
 const app = express();
@@ -84,6 +85,7 @@ app.use("/api/hiring", hiringRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/transactions", transactionRoutes);  // ← যোগ করো
 
 // Health Check
 app.get("/", (req, res) => {
