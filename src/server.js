@@ -11,11 +11,10 @@ import commentRoutes from "./routes/commentRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
-
 const app = express();
 
 // ============================================
-// CORS - Complete Fix for Vercel
+// CORS
 // ============================================
 const allowedOrigins = [
   "https://legalease-client-weld.vercel.app",
@@ -26,41 +25,33 @@ const allowedOrigins = [
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  
-  // Allow all origins in development, only specific in production
+
   if (process.env.NODE_ENV === "production") {
     if (origin && allowedOrigins.includes(origin)) {
       res.header("Access-Control-Allow-Origin", origin);
     } else {
-      // Fallback - allow all
       res.header("Access-Control-Allow-Origin", "*");
     }
   } else {
     res.header("Access-Control-Allow-Origin", "*");
   }
-  
+
   res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.header("Access-Control-Expose-Headers", "Content-Length, X-Requested-With");
-  
-  // Handle preflight requests
+
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
-  
+
   next();
 });
 
-// Additional CORS using cors package as backup
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
-      callback(null, true);
-    } else {
-      callback(null, true); // Allow all in production too as fallback
-    }
+    callback(null, true);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -70,6 +61,19 @@ app.use(cors({
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
+
+// ============================================
+// Database Connection Middleware 
+// ============================================
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("DB connection error:", err.message);
+    return res.status(500).json({ message: "Database connection failed" });
+  }
+});
 
 // ============================================
 // Routes
@@ -97,9 +101,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Internal server error" });
 });
 
-// ============================================
 // Vercel Export
-// ============================================
 export default app;
 
 // Local Development
