@@ -16,27 +16,8 @@ dotenv.config();
 const app = express();
 
 // ============================================
-// CORS - Complete Fix for Vercel
+// CORS
 // ============================================
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Allow all origins
-  res.header("Access-Control-Allow-Origin", origin || "*");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods");
-  res.header("Access-Control-Expose-Headers", "Content-Length, X-Requested-With");
-  
-  // Handle preflight requests
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-  
-  next();
-});
-
-// Additional cors middleware as backup
 app.use(cors({
   origin: "*",
   credentials: true,
@@ -76,18 +57,27 @@ app.use((err, req, res, next) => {
 });
 
 // ============================================
-// Vercel Export
+// Connect to Database and Start Server
 // ============================================
-export default app;
-
-// ============================================
-// Local Development
-// ============================================
-if (process.env.NODE_ENV !== "production") {
-  const PORT = process.env.PORT || 5000;
-  connectDB().then(() => {
+const startServer = async () => {
+  try {
+    await connectDB();
+    const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
-  });
+  } catch (error) {
+    console.error("Failed to start server:", error.message);
+    process.exit(1);
+  }
+};
+
+// Only run if not in Vercel
+if (process.env.VERCEL !== "1") {
+  startServer();
 }
+
+// ============================================
+// Vercel Export (if needed)
+// ============================================
+export default app;
