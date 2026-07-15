@@ -1,6 +1,8 @@
 import HiringRequest from "../models/HiringRequest.js";
 import Lawyer from "../models/Lawyer.js";
 import Transaction from "../models/Transaction.js";
+import User from "../models/User.js";
+import { sendEmail, emailTemplates } from "../utils/email.js";
 
 // @desc   Create a hiring request (client hires a lawyer)
 // @route  POST /api/hiring
@@ -35,6 +37,18 @@ export const createHiringRequest = async (req, res) => {
       lawyer: lawyerId,
       fee: lawyer.hourlyRate,
     });
+
+    // Get client details
+    const client = await User.findById(req.user._id);
+
+    // Send email notification to lawyer
+    const template = emailTemplates.hiringRequest(client.fullName, lawyer.name);
+    sendEmail(
+      lawyer.user?.email || "lawyer@example.com",
+      template.subject,
+      template.body,
+      { clientName: client.fullName, lawyerName: lawyer.name }
+    );
 
     res.status(201).json({ message: "Hiring request sent.", hiringRequest });
   } catch (error) {
@@ -104,9 +118,30 @@ export const updateHiringStatus = async (req, res) => {
     hiringRequest.status = status;
     await hiringRequest.save();
 
+    // Get client details
+    const client = await User.findById(hiringRequest.client);
+
     if (status === "accepted") {
       lawyerProfile.totalHires += 1;
       await lawyerProfile.save();
+
+      // Send email notification to client
+      const template = emailTemplates.hiringAccepted(client.fullName, lawyerProfile.name);
+      sendEmail(
+        client.email,
+        template.subject,
+        template.body,
+        { clientName: client.fullName, lawyerName: lawyerProfile.name }
+      );
+    } else if (status === "rejected") {
+      // Send email notification to client
+      const template = emailTemplates.hiringRejected(client.fullName, lawyerProfile.name);
+      sendEmail(
+        client.email,
+        template.subject,
+        template.body,
+        { clientName: client.fullName, lawyerName: lawyerProfile.name }
+      );
     }
 
     res.status(200).json({ message: `Request ${status}.`, hiringRequest });
@@ -158,10 +193,26 @@ export const payHiringFee = async (req, res) => {
       amount: hiringRequest.fee,
     });
 
-    res.status(200).json({ 
-      message: "Payment successful.", 
+    // Get client details
+    const client = await User.findById(req.user._id);
+
+    // Send email notification to client
+    const template = emailTemplates.paymentSuccess(
+      client.fullName,
+      lawyerProfile.name,
+      hiringRequest.fee
+    );
+    sendEmail(
+      client.email,
+      template.subject,
+      template.body,
+      { clientName: client.fullName, lawyerName: lawyerProfile.name, amount: hiringRequest.fee }
+    );
+
+    res.status(200).json({
+      message: "Payment successful.",
       hiringRequest,
-      transactionId: hiringRequest.transactionId 
+      transactionId: hiringRequest.transactionId
     });
   } catch (error) {
     console.error("Pay hiring fee error:", error.message);
