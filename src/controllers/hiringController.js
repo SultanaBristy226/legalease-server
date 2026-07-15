@@ -123,6 +123,7 @@ export const updateHiringStatus = async (req, res) => {
 
     if (status === "accepted") {
       lawyerProfile.totalHires += 1;
+      lawyerProfile.isHired = true;
       await lawyerProfile.save();
 
       // Send email notification to client

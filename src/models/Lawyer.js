@@ -41,10 +41,25 @@ const lawyerSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // ============================================
+    // Hired Badge - Auto set when lawyer is hired
+    // ============================================
+    isHired: {
+      type: Boolean,
+      default: false,
+    },
+    // ============================================
+    // Shortlist Count - Total users who shortlisted
+    // ============================================
+    shortlistCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
 
+// Text index for search
 lawyerSchema.index({ name: "text", specialization: "text" });
 
 const Lawyer = mongoose.model("Lawyer", lawyerSchema);
