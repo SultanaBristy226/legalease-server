@@ -1,4 +1,5 @@
 import Shortlist from "../models/Shortlist.js";
+import Lawyer from "../models/Lawyer.js";
 
 // Toggle shortlist (add/remove)
 export const toggleShortlist = async (req, res) => {
@@ -16,6 +17,7 @@ export const toggleShortlist = async (req, res) => {
     if (existing) {
       // Remove from shortlist
       await Shortlist.findByIdAndDelete(existing._id);
+      await Lawyer.findByIdAndUpdate(lawyerId, { $inc: { shortlistCount: -1 } });
       return res.status(200).json({ 
         message: "Removed from shortlist", 
         shortlisted: false 
@@ -23,6 +25,7 @@ export const toggleShortlist = async (req, res) => {
     } else {
       // Add to shortlist
       await Shortlist.create({ user: userId, lawyer: lawyerId });
+      await Lawyer.findByIdAndUpdate(lawyerId, { $inc: { shortlistCount: 1 } });
       return res.status(200).json({ 
         message: "Added to shortlist", 
         shortlisted: true 

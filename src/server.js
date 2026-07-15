@@ -10,15 +10,13 @@ import userRoutes from "./routes/userRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
-import paymentRoutes from "./routes/paymentRoutes.js";
+import shortlistRoutes from "./routes/shortlistRoutes.js";  // ← যোগ করো
 
 dotenv.config();
 
 const app = express();
 
-// ============================================
 // CORS
-// ============================================
 app.use(cors({
   origin: "*",
   credentials: true,
@@ -30,10 +28,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
-
-// ============================================
 // Routes
-// ============================================
 app.use("/api/auth", authRoutes);
 app.use("/api/lawyers", lawyerRoutes);
 app.use("/api/hiring", hiringRoutes);
@@ -41,7 +36,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/transactions", transactionRoutes);
-app.use("/api/payment", paymentRoutes);
+app.use("/api/shortlist", shortlistRoutes);  // ← যোগ করো
 
 // Health Check
 app.get("/", (req, res) => {
@@ -59,28 +54,15 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Internal server error" });
 });
 
-// ============================================
-// Connect to Database and Start Server
-// ============================================
-const startServer = async () => {
-  try {
-    await connectDB();
-    const PORT = process.env.PORT || 5000;
+// Vercel Export
+export default app;
+
+// Local Development
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 5000;
+  connectDB().then(() => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
-  } catch (error) {
-    console.error("Failed to start server:", error.message);
-    process.exit(1);
-  }
-};
-
-// Only run if not in Vercel
-if (process.env.VERCEL !== "1") {
-  startServer();
+  });
 }
-
-// ============================================
-// Vercel Export (if needed)
-// ============================================
-export default app;
