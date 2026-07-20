@@ -1,7 +1,6 @@
 import Stripe from "stripe";
 import HiringRequest from "../models/HiringRequest.js";
 import Transaction from "../models/Transaction.js";
-import Lawyer from "../models/Lawyer.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
