@@ -1,10 +1,10 @@
 export const confirmPayment = async (req, res) => {
   try {
     const { paymentIntentId } = req.body;
-    console.log("Confirming payment:", paymentIntentId);
+    console.log("🔍 Confirming payment:", paymentIntentId);
 
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    console.log("Payment intent status:", paymentIntent.status);
+    console.log("🔍 Payment intent status:", paymentIntent.status);
 
     if (paymentIntent.status !== "succeeded") {
       return res.status(400).json({ 
@@ -13,7 +13,7 @@ export const confirmPayment = async (req, res) => {
     }
 
     const hiringId = paymentIntent.metadata.hiringId;
-    console.log("Hiring ID:", hiringId);
+    console.log("🔍 Hiring ID:", hiringId);
 
     const hiring = await HiringRequest.findById(hiringId);
     if (!hiring) {
@@ -36,13 +36,15 @@ export const confirmPayment = async (req, res) => {
       amount: hiring.fee,
     });
 
+    console.log("✅ Payment confirmed successfully!");
+
     res.status(200).json({ 
       message: "Payment successful", 
       hiring,
       transactionId: hiring.transactionId 
     });
   } catch (error) {
-    console.error("Confirm payment error:", error.message);
+    console.error("❌ Confirm payment error:", error.message);
     res.status(500).json({ message: error.message });
   }
 };
